@@ -48,7 +48,6 @@ data/omnidoc_sample/
 
    ```bash
    python -m ocr_benchmark.cli --methods textract --textract-region us-east-1 \
-       --textract-profile benchmark-user \
        --manifest path/to/your/omnibook_subset/manifest.jsonl --markdown \
        --output-json textract-results.json
    ```
