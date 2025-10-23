@@ -21,6 +21,7 @@ def _build_extractor(name: str, args: argparse.Namespace):
             region_name=args.textract_region,
             api_mode=args.textract_mode,
             feature_types=args.textract_feature_types,
+            profile_name=args.textract_profile,
         )
     raise ValueError(f"Unknown extractor '{name}'. Available: plaintext, textract")
 
@@ -60,6 +61,11 @@ def parse_args(argv: List[str] | None = None) -> argparse.Namespace:
         "--textract-region",
         default=None,
         help="AWS region to use for Textract (falls back to environment configuration)",
+    )
+    parser.add_argument(
+        "--textract-profile",
+        default=None,
+        help="Name of the AWS shared credentials profile to use for Textract",
     )
     parser.add_argument(
         "--textract-mode",

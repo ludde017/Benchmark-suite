@@ -23,6 +23,7 @@ class TextractExtractor(BaseExtractor):
         region_name: Optional[str] = None,
         api_mode: str = "detect_document_text",
         feature_types: Optional[List[str]] = None,
+        profile_name: Optional[str] = None,
         name: str | None = None,
     ) -> None:
         super().__init__(name or "textract")
@@ -34,7 +35,11 @@ class TextractExtractor(BaseExtractor):
                     "boto3 is required to use TextractExtractor. Install boto3 and "
                     "configure AWS credentials to enable this extractor."
                 )
-            self._client = boto3.client("textract", region_name=region_name)
+            session_kwargs = {}
+            if profile_name:
+                session_kwargs["profile_name"] = profile_name
+            session = boto3.session.Session(**session_kwargs)
+            self._client = session.client("textract", region_name=region_name)
         self.api_mode = api_mode
         self.feature_types = feature_types or ["TABLES", "FORMS"]
 
