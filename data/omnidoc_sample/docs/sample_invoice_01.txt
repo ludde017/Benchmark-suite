@@ -1,0 +1,8 @@
+OmniDoc Sample Invoice
+Invoice #: INV-2024-0042
+Vendor: Northwind Parts Co.
+Bill To: OmniDoc Research Group
+Subtotal: 1,250.00
+Tax (5%): 62.50
+Total Due: 1,312.50
+Due Date: 2024-04-30
