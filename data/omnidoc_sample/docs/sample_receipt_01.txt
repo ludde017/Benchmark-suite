@@ -1,0 +1,10 @@
+OmniDoc Sample Receipt
+Store: QuickStop Market
+Date: 2024-03-18 17:42
+Items:
+ - Cold Brew Coffee  2 x 4.25  = 8.50
+ - Protein Bar       1 x 2.99  = 2.99
+ - Notebook          1 x 3.49  = 3.49
+Total: 14.98
+Payment Method: Visa (**** 2871)
+Thank you for shopping with us!
