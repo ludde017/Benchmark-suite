@@ -1,7 +1,7 @@
 # OCR Benchmark Suite
 
 This repository contains a lightweight OCR benchmarking harness built around a
-small, self-contained sample of the [OmniDoc](https://huggingface.co/datasets/microsoft/omnibook-ocr) benchmark. The suite is
+small, self-contained sample inspired by the [OmniDocBench](https://huggingface.co/datasets/opendatalab/OmniDocBench) benchmark. The suite is
 modular so that you can compare AWS Textract against other OCR back-ends with
 consistent metrics and reporting.
 
@@ -15,6 +15,36 @@ ocr_benchmark/
   metrics.py          - Character/word error rates and related metrics
   models/             - OCR extractors (Textract + plaintext baseline)
   reporting.py        - Helpers for textual/markdown summaries
+
+## Design overview
+
+```mermaid
+graph TD
+    Manifest[JSONL Manifest] -->|load_manifest| DataLoader[Sample Loader]
+    DataLoader --> Runner[BenchmarkRunner]
+    Runner -->|calls| Extractors[Extractor Implementations]
+    Extractors -->|produce text + metadata| Metrics[Metric Computation]
+    Metrics --> Report[BenchmarkReport]
+    Report --> CLI[CLI Formatter]
+    Report --> JSON[JSON Export]
+```
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI
+    participant Runner
+    participant Extractor
+    participant Metrics
+    User->>CLI: python -m ocr_benchmark.cli --methods ...
+    CLI->>Runner: BenchmarkRunner(samples)
+    Runner->>Extractor: extract(sample)
+    Extractor-->>Runner: text, latency, metadata
+    Runner->>Metrics: compute_metrics(reference, text)
+    Metrics-->>Runner: per-sample metrics
+    Runner-->>CLI: BenchmarkReport
+    CLI-->>User: plaintext summary + optional Markdown
+```
 
 data/omnidoc_sample/
   manifest.jsonl      - Three-sample OmniDoc-style manifest
@@ -48,6 +78,7 @@ data/omnidoc_sample/
 
    ```bash
    python -m ocr_benchmark.cli --methods textract --textract-region us-east-1 \
+       --textract-profile benchmark-user \
        --manifest path/to/your/omnibook_subset/manifest.jsonl --markdown \
        --output-json textract-results.json
    ```
@@ -96,12 +127,13 @@ Aggregated metrics are exposed per method alongside optional metadata
 (including average confidence and run timestamp). Full results can be exported
 as JSON via the `--output-json` flag.
 
-## Using a larger OmniDoc subset
+## Using a larger OmniDocBench subset
 
 Replace `data/omnidoc_sample/manifest.jsonl` with a manifest pointing to the
-OmniDoc pages you want to evaluate. A convenient way to curate a subset is to
-load OmniDoc via the `datasets` library, select the samples you need, and
-serialise their metadata to JSONL. For example:
+OmniDocBench pages you want to evaluate. A convenient way to curate a subset is
+to load OmniDocBench via the `datasets` library, inspect the available fields,
+select the samples you need, and serialise their metadata to JSONL. For
+example:
 
 ```bash
 pip install datasets Pillow
@@ -110,7 +142,11 @@ import json
 from pathlib import Path
 from datasets import load_dataset
 
-dataset = load_dataset("microsoft/omnibook-ocr", split="train")
+dataset = load_dataset("opendatalab/OmniDocBench", split="validation")
+
+# Adapt the feature names below to match the fields printed by dataset.features
+print(dataset.features)
+
 subset = dataset.shuffle(seed=42).select(range(25))
 
 image_dir = Path("images")
@@ -119,7 +155,7 @@ image_dir.mkdir(parents=True, exist_ok=True)
 with open("manifest.jsonl", "w", encoding="utf-8") as fp:
     for example in subset:
         image = example["image"]
-
+        
         if isinstance(image, dict) and image.get("path"):
             source_path = image["path"]
         elif isinstance(image, dict) and image.get("bytes"):
@@ -138,10 +174,10 @@ with open("manifest.jsonl", "w", encoding="utf-8") as fp:
                 {
                     "id": example["id"],
                     "source": source_path,
-                    "ground_truth": example["text"],
+                    "ground_truth": example.get("text") or example.get("ground_truth"),
                     "metadata": {
-                        "source_dataset": "microsoft/omnibook-ocr",
-                        "split": "train",
+                        "source_dataset": "opendatalab/OmniDocBench",
+                        "split": "validation",
                         "document_type": example.get("doc_type"),
                     },
                 }
@@ -153,7 +189,9 @@ PY
 
 The command above writes PNGs into an `images/` directory next to the manifest
 and references them via relative paths. Adjust `image_dir` or relocate the
-manifest as needed for your storage layout.
+manifest as needed for your storage layout. If the dataset exposes different
+field names (for example, `ocr_text` instead of `text`), update the dictionary
+access accordingly.
 
 Feel free to inline `ground_truth` directly, as above, or reference files with
 `ground_truth_path`. The manifest follows a JSONL structure:
@@ -178,5 +216,5 @@ Feel free to inline `ground_truth` directly, as above, or reference files with
 ## License
 
 The included sample files are synthetic transcriptions designed to mimic the
-structure of OmniDoc pages. Refer to the upstream OmniDoc dataset for licensing
-information when benchmarking against the full corpus.
+structure of OmniDocBench pages. Refer to the upstream OmniDocBench dataset for
+licensing information when benchmarking against the full corpus.

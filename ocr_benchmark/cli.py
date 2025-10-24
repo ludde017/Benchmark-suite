@@ -32,7 +32,7 @@ def parse_args(argv: List[str] | None = None) -> argparse.Namespace:
         "--manifest",
         type=Path,
         default=Path("data/omnidoc_sample/manifest.jsonl"),
-        help="Path to the OmniDoc sample manifest (JSONL)",
+        help="Path to the OmniDocBench-style sample manifest (JSONL)",
     )
     parser.add_argument(
         "--methods",
